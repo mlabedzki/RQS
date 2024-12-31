@@ -6,128 +6,6 @@ ccy_setup()
 indices_setup()
 comm_setup()
 
-testing<-function(){
-  pe1 = read.csv(paste0(data_folder,"/pe1.csv"),sep="\t")
-  pe10 = read.csv(paste0(data_folder,"/pe10.csv"),sep="\t") #https://www.quandl.com/data/MULTPL/SHILLER_PE_RATIO_MONTH
-  pe10$Date=as.Date(as.character(pe10$Date),format="%m/%d/%Y");pe10=ts2xts(pe10)
-  pe1$Date=as.Date(as.character(pe1$Date),format="%d/%m/%Y");pe1=ts2xts(pe1)
-  vix_m = to.monthly(ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS")))[,4]
-  fin_d = ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y3M"))
-  t10y3m = to.monthly(fin_d)[,4]
-  t10y2y = to.monthly(ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y")))[,4]
-  t10y =  to.monthly(ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10")))[,4]
-  t2y =  to.monthly(ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2")))[,4]
-  ty_d = local_load('zn_f')
-  ty = to.monthly(137-local_load('zn_f'))[,4]
-  ed_d = local_load('ge_f')
-  ed = to.monthly(100-local_load('ge_f'))[,4]
-  ts = load_indices_loc(c('ukousdon','ukousd1w','ukousd1m','ukousd2m','ukousd3m','ukousd6m'))/100
-  fwd3m = 1/(4.5/12 - 1.5/12) * ( (1+(ts$ukousd6m/2+ts$ukousd3m/2)*4.5/12)/(1+(ts$ukousd2m/2+ts$ukousd1m/2)*1.5/12) -1)
-  edcost = fwd3m - ts$ukousd1w
-  ed1 = load_futures(c('CME_ED'),1)
-  ed2 = load_futures(c('CME_ED'),2)
-  summary(abs(ed1-ed_d))
-  ts_m = mat.to.monthly(ts)
-  
-  tyc = diff(log(ty_d)) - log(1+fin_d/100)/252
-  tyc = xts(exp(cumsum(na20(tyc))),index(tyc))
-  tyc[which(tyc==1)] = NA
-  tyc_m = mat.to.monthly(tyc)
-  tyc_mret = diff(log(tyc_m))
-  
-  edc = diff(log(ed_d)) - log(1+edcost)/252
-  edc = xts(exp(cumsum(na20(edc))),index(edc))
-  edc[which(edc==1)] = NA
-  edc_m = mat.to.monthly(edc)
-  edc_mret = diff(log(edc_m))
-  
-  #fut_carry_d = -log(fut_d2/fut_d)*fut_series
-  
-  set = cbind(t10y2y,t10y3m,out,diff(out),t10y,ty,ed,tyc_m,tyc_mret,edc_m,edc_mret,edcost,ts$ukousd1w)
-  colnames(set) = c('tsn','tsb','logeq','ret','t10y','ty','ed','tyc','tycret','edc','edcret','edcost','libor')
-  set = set['1997-01-01/']
-  lm1 = lm(logeq~tsb+tsn+ty+ed+tyc,data=set); summary(lm1)
-  lm1 = lm(logeq~ty+tyc,data=set); summary(lm1)
-  lm2 = lm(ret~tycret+edcret,data=set); summary(lm2)
-  
-  round(cor(cbind(set$logeq,set$tsb,set$tsn,set$tyc,set$edc,set$edcost,set$t10y,set$libor),use="complete.obs"),3)
-  round(cor(cbind(set$ret,set$tycret,set$edcret),use="complete.obs"),3)
-  
-  summary(set$logeq)
-  plot(out['1998-01-01/']/abs(as.numeric(out['1998-01-01'])))
-  plot((exp(out['1998-01-01/'])+0.2)*2/3+tyc_m['1998-01-01/']/3)
-  tescik = (exp(out['1998-01-01/'])+0.2)*4/5+edc_m['1998-01-01/']/5
-  plot(tescik)
-  SR(diff(log(tescik)))
-  SR(diff(out['1998-01-01/']))
-  
-  
-  plot(ts(cumsum(set$tsb-0.5)))
-  plot(set$ty-set$ed)
-  plot(set$tsb)
-  plot(-set$ty)
-  plot(-set$t10y)
-  plot(edc_m['1998-01-01/'])
-  plot(ed['1998-01-01/'])
-  plot(tyc_m['1998-01-01/'])
-  plot(set$tsn['1998-01-01/'])
-  plot(fwd3m-ts$ukousd3m)
-  plot(edcost['1998-01-01/'])
-  
-  #plot
-  #l6 = .0163171
-  #l3 = .0143567
-  #l2 = .0137944
-  #l1 = .0128267
-  #lon = .0118278 
-  #l4_5 = l6/2+l3/2
-  #l1_5 = l2/2+l1/2
-  #l3x6 = 1/(0.5-0.25) * ( (1+l6*0.5)/(1+l3*0.25) -1)
-  #l1_5x4_5
-  #1/(4.5/12 - 1.5/12) * ( (1+l4_5*4.5/12)/(1+l1_5*1.5/12) -1) - lon
-  
-  #why does fx carry does not work sometimes
-  
-  plot(cumsum(na20(tt)))
-  plot(ts(cumsum(na20(rowMeans(indices_rates['1997-01-01/'])))))
-  plot(ts((na20(rowMeans(-carry_m['1997-01-01/'])))))
-  SR(tt)
-  
-  tt=cbind(a,b,i5d)
-  tt=xts(log(rowMeans(exp(tt),na.rm=T)),index(tt))
-  
-  meanCarry = xts(rowMeans(-carry_m,na.rm=T),index(carry_m))
-  set = cbind(cumsum(na20(tt)),tt,meanCarry,t10y2y,t10y3m,t10y,ty,ed,tyc_m,tyc_mret,edc_m,edc_mret,edcost,ts$ukousd1w)
-  colnames(set) = c('logeq','ret','mc','tsn','tsb','t10y','ty','ed','tyc','tycret','edc','edcret','edcost','libor')
-  set = set['1997-01-01/']
-  lm1 = lm(ret~t10y+mc-1,data=set); summary(lm1)
-  
-  plot(histcorr(t2d,t4d,3))
-  SR(pmax(t2d,levret(2,t4d)),12)
-  SR(pmax(levret(2,a),c),12)
-  SR(c/2+a,12)
-  plot(cumsum(na20(pmax(levret(2.2,a),c))))
-  z = (lag(c - levret(2,a),-1))>0
-  lz = (c - levret(2,a))>0
-  lzval = c - levret(2,a)
-  usindpro= indpro[,1]
-  uscpi = diff(log(indcpi[,1]),12)
-  plot(usindpro)
-  usindpot=indpot[,1]
-  usrate = indices_rates[,1]
-  reces = indpot[,1]<0
-  sa = a>0
-  sc = c>0
-  
-  set = cbindname(z,lz,lzval,sa,sc,t10y,t10y3m,t10y2y,t2y,vix_m,usindpot,usindpro,uscpi,ed,ty,usrate)
-  summary(glm(z~t2y+ed-1,data=set,family="binomial"))
-  tt = 0.27*ed + 13.11*usindpro/ + 0.67*t10y2y - 10.6
-  plot(ed-t2y)
-  SR(simpledominance(t2d,levret(2,t4d),!lag(st2d)),12)
-  SR(t2d+levret(2,t4d),12)
-  SR(ifelse(lag(t2y-ed)<0,c,levret(2,a)),12)
-}#TESTING
-
 macrodays <- function(){
   futvalue_d = fut_d - lag(fut_dsmoo,5*252)
   
@@ -291,7 +169,7 @@ macrodouble <- function(){
   t10d=carry12d(ccys3,ccy3_spreads/4,i2c,carry3,ycost=fxcost,1,start,v=1,e=1);SR(t10d,12)  
 }
 
-tsmom<-function(){
+portfolios_all<-function(){
   start=412
   start=319
   vcorr=2
@@ -1618,4 +1496,127 @@ stocks<-function(){
   #download_stooq(wigmv_name)
   #download_stooq(wigdy_name)
   #download_stooq(wigbv_name)
-}#teraz akcje
+}#stocks
+
+  index_fundamental<-function(){
+  pe1 = read.csv(paste0(data_folder,"/pe1.csv"),sep="\t")
+  pe10 = read.csv(paste0(data_folder,"/pe10.csv"),sep="\t") #https://www.quandl.com/data/MULTPL/SHILLER_PE_RATIO_MONTH
+  pe10$Date=as.Date(as.character(pe10$Date),format="%m/%d/%Y");pe10=ts2xts(pe10)
+  pe1$Date=as.Date(as.character(pe1$Date),format="%d/%m/%Y");pe1=ts2xts(pe1)
+  vix_m = to.monthly(ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS")))[,4]
+  fin_d = ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y3M"))
+  t10y3m = to.monthly(fin_d)[,4]
+  t10y2y = to.monthly(ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y")))[,4]
+  t10y =  to.monthly(ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10")))[,4]
+  t2y =  to.monthly(ts2xts(read.csv("https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2")))[,4]
+  ty_d = local_load('zn_f')
+  ty = to.monthly(137-local_load('zn_f'))[,4]
+  ed_d = local_load('ge_f')
+  ed = to.monthly(100-local_load('ge_f'))[,4]
+  ts = load_indices_loc(c('ukousdon','ukousd1w','ukousd1m','ukousd2m','ukousd3m','ukousd6m'))/100
+  fwd3m = 1/(4.5/12 - 1.5/12) * ( (1+(ts$ukousd6m/2+ts$ukousd3m/2)*4.5/12)/(1+(ts$ukousd2m/2+ts$ukousd1m/2)*1.5/12) -1)
+  edcost = fwd3m - ts$ukousd1w
+  ed1 = load_futures(c('CME_ED'),1)
+  ed2 = load_futures(c('CME_ED'),2)
+  summary(abs(ed1-ed_d))
+  ts_m = mat.to.monthly(ts)
+  
+  tyc = diff(log(ty_d)) - log(1+fin_d/100)/252
+  tyc = xts(exp(cumsum(na20(tyc))),index(tyc))
+  tyc[which(tyc==1)] = NA
+  tyc_m = mat.to.monthly(tyc)
+  tyc_mret = diff(log(tyc_m))
+  
+  edc = diff(log(ed_d)) - log(1+edcost)/252
+  edc = xts(exp(cumsum(na20(edc))),index(edc))
+  edc[which(edc==1)] = NA
+  edc_m = mat.to.monthly(edc)
+  edc_mret = diff(log(edc_m))
+  
+  #fut_carry_d = -log(fut_d2/fut_d)*fut_series
+  
+  set = cbind(t10y2y,t10y3m,out,diff(out),t10y,ty,ed,tyc_m,tyc_mret,edc_m,edc_mret,edcost,ts$ukousd1w)
+  colnames(set) = c('tsn','tsb','logeq','ret','t10y','ty','ed','tyc','tycret','edc','edcret','edcost','libor')
+  set = set['1997-01-01/']
+  lm1 = lm(logeq~tsb+tsn+ty+ed+tyc,data=set); summary(lm1)
+  lm1 = lm(logeq~ty+tyc,data=set); summary(lm1)
+  lm2 = lm(ret~tycret+edcret,data=set); summary(lm2)
+  
+  round(cor(cbind(set$logeq,set$tsb,set$tsn,set$tyc,set$edc,set$edcost,set$t10y,set$libor),use="complete.obs"),3)
+  round(cor(cbind(set$ret,set$tycret,set$edcret),use="complete.obs"),3)
+  
+  summary(set$logeq)
+  plot(out['1998-01-01/']/abs(as.numeric(out['1998-01-01'])))
+  plot((exp(out['1998-01-01/'])+0.2)*2/3+tyc_m['1998-01-01/']/3)
+  tescik = (exp(out['1998-01-01/'])+0.2)*4/5+edc_m['1998-01-01/']/5
+  plot(tescik)
+  SR(diff(log(tescik)))
+  SR(diff(out['1998-01-01/']))
+  
+  
+  plot(ts(cumsum(set$tsb-0.5)))
+  plot(set$ty-set$ed)
+  plot(set$tsb)
+  plot(-set$ty)
+  plot(-set$t10y)
+  plot(edc_m['1998-01-01/'])
+  plot(ed['1998-01-01/'])
+  plot(tyc_m['1998-01-01/'])
+  plot(set$tsn['1998-01-01/'])
+  plot(fwd3m-ts$ukousd3m)
+  plot(edcost['1998-01-01/'])
+  
+  #plot
+  #l6 = .0163171
+  #l3 = .0143567
+  #l2 = .0137944
+  #l1 = .0128267
+  #lon = .0118278 
+  #l4_5 = l6/2+l3/2
+  #l1_5 = l2/2+l1/2
+  #l3x6 = 1/(0.5-0.25) * ( (1+l6*0.5)/(1+l3*0.25) -1)
+  #l1_5x4_5
+  #1/(4.5/12 - 1.5/12) * ( (1+l4_5*4.5/12)/(1+l1_5*1.5/12) -1) - lon
+  
+  #why does fx carry does not work sometimes
+  
+  plot(cumsum(na20(tt)))
+  plot(ts(cumsum(na20(rowMeans(indices_rates['1997-01-01/'])))))
+  plot(ts((na20(rowMeans(-carry_m['1997-01-01/'])))))
+  SR(tt)
+  
+  tt=cbind(a,b,i5d)
+  tt=xts(log(rowMeans(exp(tt),na.rm=T)),index(tt))
+  
+  meanCarry = xts(rowMeans(-carry_m,na.rm=T),index(carry_m))
+  set = cbind(cumsum(na20(tt)),tt,meanCarry,t10y2y,t10y3m,t10y,ty,ed,tyc_m,tyc_mret,edc_m,edc_mret,edcost,ts$ukousd1w)
+  colnames(set) = c('logeq','ret','mc','tsn','tsb','t10y','ty','ed','tyc','tycret','edc','edcret','edcost','libor')
+  set = set['1997-01-01/']
+  lm1 = lm(ret~t10y+mc-1,data=set); summary(lm1)
+  
+  plot(histcorr(t2d,t4d,3))
+  SR(pmax(t2d,levret(2,t4d)),12)
+  SR(pmax(levret(2,a),c),12)
+  SR(c/2+a,12)
+  plot(cumsum(na20(pmax(levret(2.2,a),c))))
+  z = (lag(c - levret(2,a),-1))>0
+  lz = (c - levret(2,a))>0
+  lzval = c - levret(2,a)
+  usindpro= indpro[,1]
+  uscpi = diff(log(indcpi[,1]),12)
+  plot(usindpro)
+  usindpot=indpot[,1]
+  usrate = indices_rates[,1]
+  reces = indpot[,1]<0
+  sa = a>0
+  sc = c>0
+  
+  set = cbindname(z,lz,lzval,sa,sc,t10y,t10y3m,t10y2y,t2y,vix_m,usindpot,usindpro,uscpi,ed,ty,usrate)
+  summary(glm(z~t2y+ed-1,data=set,family="binomial"))
+  tt = 0.27*ed + 13.11*usindpro/ + 0.67*t10y2y - 10.6
+  plot(ed-t2y)
+  SR(simpledominance(t2d,levret(2,t4d),!lag(st2d)),12)
+  SR(t2d+levret(2,t4d),12)
+  SR(ifelse(lag(t2y-ed)<0,c,levret(2,a)),12)
+}#index_fundamentals testing
+  
