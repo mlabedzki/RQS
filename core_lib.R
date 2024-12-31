@@ -2318,3 +2318,4 @@ synth <- function(open,close,o.type=1,c.type=1){
   y = capcumsum(na20(xo)+na20(xc))
   sign(y)
 }
+quickrec<-function(x,denom=1){cumsum(na20(diff(x)*-1/lag(x)^2*ilor(denom)))}
