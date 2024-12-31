@@ -850,11 +850,6 @@ splotMat <- function(dailypricec,dailypriceo,monthlypos){
   out = ifelse(dane$monthchanges == 0, dane$returns, dane$returnsdays)
   out
 }
-#tw4=carry12(ccys,lag(ccys),ccy_spreads/4,-carry_w,carry_w,0.01,-1,2,5,v=1,e=1,f=52,h=4,sh=0);SR(tw4['1998-01/']['/2014-06'],52)
-#tw4=carry12(ccys,lag(ccys),ccy_spreads/4,-carry_m,carry_m,0.01,-1,2,5,v=1,e=1,f=12,h=1,sh=0);SR(tw4['1998-01/']['/2014-06'],12)
-#tw4=carry12old(ccys,ccy_spreads/4,-carry_m,carry_m,0.01,dir=-1,k=2,s=start,v=3,e=1,f=12,pos=0,p=1);SR(tw4['1998-01/']['/2014-06'],12)
-#tw4=carry12(ccys,lag(ccys),ccy_spreads/4,-carry_m,carry_m,0.01,-1,2,start,v=3,e=1,f=12,h=1,sh=0);SR(tw4['/2014-06'],12)
-#plot(cumsum(na20(tw4)))
 carry12old <- function(prices_d,prices_do,bpsspread,criteria0,carry=0,ycost=0.01,dir=1,k=3,s=1,v=0,e=0,f=12,pos=0,p=1) {
   options(warn=-1)
   if(f==12) {prices = mat.to.monthly(prices_d); priceso = mat.to.monthly(prices_do,1)}
